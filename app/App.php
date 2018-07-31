@@ -18,8 +18,10 @@ class App
         $this->loadConfig('config');
         $this->loadConfig('database');
         $this->loadConfig('helpers');
+        $this->loadConfig('routes');
         $this->loadConfigHelpers();
         $this->loadEnv();
+        return $this->directTraffic();
     }
 
     public function config($path)
@@ -30,6 +32,65 @@ class App
     public function env($path)
     {
         return try_get($this->env, $path);
+    }
+
+    public function view($name, $with = [])
+    {
+        $html = read_file(VIEW_DIR . DS . $name . '.blade.php');
+        $html = $this->parseView($name, $html, $with);
+        $html = $this->parseView($name, $html, $with, false, '<?php', '?>');
+
+        return $html;
+    }
+
+    public function parseView($name, $html, $with = [], $expectReturn = true, $tagStart = '{!!', $tagEnd = '!!}')
+    {
+        foreach($with as $key => $value)
+        {
+            $$key = $value;
+        }
+
+        $count = 0;
+
+        $tagStartIndex = 0;
+        $tagEndIndex = 0;
+        do
+        {
+//            if($count > 5)
+//            {
+//                dump($tagStartIndex);
+//                dump($tagEndIndex);
+//                dd($html);
+//            }
+
+            $tagStartIndex  = strpos($html, $tagStart, min($tagStartIndex, strlen($html)));
+            $tagEndIndex    = strpos($html, $tagEnd, min($tagEndIndex, strlen($html)));
+            $validTags      = $tagStartIndex !== false && $tagEndIndex !== false;
+            if($validTags)
+            {
+                $tagStartIndex += strlen($tagStart);
+                $code = trim(substr($html, $tagStartIndex, $tagEndIndex - $tagStartIndex), " \t\n\r \v;");
+                $code = $expectReturn ? "return ($code);" : $code . ';';
+                try
+                {
+                    $result = eval($code);
+                }
+                catch(\Error $exception)
+                {
+                    error("Failed to eval view '$name' char indexes $tagStartIndex - $tagEndIndex");
+                }
+                $result = $expectReturn ? $result : '';
+                if(is_string($result))
+                {
+                    $html = substr($html, 0, $tagStartIndex - strlen($tagStart)) . $result . substr($html, $tagEndIndex + strlen($tagEnd));
+                }
+            }
+//            $tagStartIndex  -= strlen($tagStart);
+//            $tagEndIndex    -= strlen($tagStart) + strlen($tagEnd);
+            $count++;
+        } while($validTags);
+
+        return $html;
     }
 
     protected $env = [];
@@ -96,6 +157,51 @@ class App
                 $config = [$name => $config];
                 $this->config = array_replace($this->config, $config);
             }
+        }
+    }
+
+    public function directTraffic()
+    {
+        $url            = $_SERVER['REQUEST_URI'];
+        $routes         = config('routes');
+        $routeChosen    = null;
+        $routeAction    = null;
+
+        foreach($routes as $route => $action)
+        {
+            if(strpos($url, $route) !== false || $route === '*')
+            {
+                $routeChosen = $route;
+                $routeAction = $action;
+            }
+        }
+
+        if($routeChosen && $routeAction)
+        {
+            if(is_string($routeAction))
+            {
+                list($controllerName, $function) = explode('@', $routeAction);
+                include_file(CONTROLLERS_DIR . DS . $controllerName . '.php');
+                $callback = function() use($controllerName, $function)
+                {
+                    if(!class_exists($controllerName))
+                    {
+                        error("Failed to instantiate controller '$controllerName'");
+                    }
+                    $controller = new $controllerName();
+                    if(!method_exists($controller, $function))
+                    {
+                        error("Function missing in controller '$controllerName::$function()'");
+                    }
+                    return $controller->$function();
+                };
+            }
+            else
+            {
+                $callback = $routeAction;
+            }
+
+            return $callback();
         }
     }
 }

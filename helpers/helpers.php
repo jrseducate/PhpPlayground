@@ -256,12 +256,29 @@
          * Returns the current config value based on the path
          * config('database.connections') => {PROJECT_FOLDER}/config/database.php[connections]
          *
-         * @param $path
+         * @param string $path
          * @return mixed|null
          */
         function env($path = '')
         {
             return app()->env($path);
+        }
+    }
+
+    if(!function_exists('view'))
+    {
+        /**
+         * View
+         *
+         * Returns the view from the views folder
+         *
+         * @param string $name
+         * @param array $with
+         * @return mixed|null
+         */
+        function view($name, $with = [])
+        {
+            return app()->view($name, $with);
         }
     }
 

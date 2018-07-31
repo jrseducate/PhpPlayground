@@ -1,9 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-</head>
-
-<body>
 <?php
     function error($error)
     {
@@ -70,15 +64,15 @@
     define('APP_DIR', $basePath . DS . 'app');
     define('CONFIG_DIR', $basePath . DS . 'config');
     define('HELPER_DIR', $basePath . DS . 'helpers');
+    define('CONTROLLERS_DIR', $basePath . DS . 'controllers');
+    define('VIEW_DIR', $basePath . DS . 'views');
 
     $appFile = APP_DIR . DS . 'App.php';
     include_file($appFile);
 
     app()->init();
 
-    $connection = queryHelperCustom();
-    $results    = $connection->query('SELECT * FROM information_schema.tables');
-    echo array_to_table($results);
+//    $connection = queryHelperCustom();
+//    $results    = $connection->query('SELECT * FROM information_schema.tables');
+//    echo array_to_table($results);
 ?>
-</body>
-</html>
