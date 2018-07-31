@@ -6,4 +6,8 @@ class TestController
     {
         echo view('index', ['true' => 0]);
     }
+    function test()
+    {
+        dd('HERE!');
+    }
 }

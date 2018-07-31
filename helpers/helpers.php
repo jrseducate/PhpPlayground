@@ -51,7 +51,7 @@
          */
         function try_get($data, $attribute, $default = null)
         {
-            if(empty($attribute))
+            if(is_null($attribute))
             {
                 return $data;
             }

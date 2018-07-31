@@ -167,14 +167,36 @@ class App
         $routeChosen    = null;
         $routeAction    = null;
 
-        foreach($routes as $route => $action)
+        if(!empty($url))
         {
-            if(strpos($url, $route) !== false || $route === '*')
+            $questionMark = strpos($url, '?');
+            if($questionMark !== false)
             {
-                $routeChosen = $route;
-                $routeAction = $action;
+                $url = substr($url, 0, $questionMark);
             }
         }
+
+        $url = explode('/', trim($url, '/'));
+
+        foreach($routes as $route => $action)
+        {
+            $validRoute = true;
+            $route      = explode('/', trim($route, '/'));
+            foreach($route as $index => $routePart)
+            {
+                $urlPart    = try_get($url, $index, '');
+                $validRoute &= $urlPart == $routePart || $routePart == '*';
+            }
+
+            if($validRoute)
+            {
+                $routeChosen = implode('/', $route);
+                $routeAction = $action;
+                break;
+            }
+        }
+
+        $url = implode('/', $url);
 
         if($routeChosen && $routeAction)
         {
@@ -202,6 +224,10 @@ class App
             }
 
             return $callback();
+        }
+        else
+        {
+            error("Route '$url' not found");
         }
     }
 }

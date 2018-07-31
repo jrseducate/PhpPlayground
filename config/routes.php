@@ -1,5 +1,6 @@
 <?php
 
 return [
-    '*' => 'TestController@index'
+    '/test' => 'TestController@test',
+    '/*' => 'TestController@index',
 ];
