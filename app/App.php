@@ -16,10 +16,10 @@ class App
     {
         $this->loadHelpersFile();
         $this->loadConfig('config');
-        $this->loadConfig('database');
         $this->loadConfig('helpers');
-        $this->loadConfig('routes');
         $this->loadConfigHelpers();
+        $this->loadConfig('database');
+        $this->loadConfig('routes');
         $this->loadEnv();
         return $this->directTraffic();
     }
@@ -36,7 +36,8 @@ class App
 
     public function view($name, $with = [])
     {
-        $html = read_file(VIEW_DIR . DS . $name . '.blade.php');
+        $file = str_replace('.', DS, $name);
+        $html = read_file(VIEW_DIR . DS . $file . '.blade.php');
         $html = $this->parseView($name, $html, $with);
         $html = $this->parseView($name, $html, $with, false, '<?php', '?>');
 
@@ -164,7 +165,7 @@ class App
     {
         $url            = $_SERVER['REQUEST_URI'];
         $routes         = config('routes');
-        $routeChosen    = null;
+        $routeUrlChosen    = null;
         $routeAction    = null;
 
         if(!empty($url))
@@ -178,11 +179,21 @@ class App
 
         $url = explode('/', trim($url, '/'));
 
-        foreach($routes as $route => $action)
+        foreach($routes as $name => $settings)
         {
+            $action     = try_get($settings, 'call', null);
+            $routeUrl   = try_get($settings, 'url', null);
+            if(!$action)
+            {
+                error("Route '$name' has no 'call' attribute set");
+            }
+            if(!$routeUrl)
+            {
+                error("Route '$name' has no 'url' attribute set");
+            }
             $validRoute = true;
-            $route      = explode('/', trim($route, '/'));
-            foreach($route as $index => $routePart)
+            $routeUrl      = explode('/', trim($routeUrl, '/'));
+            foreach($routeUrl as $index => $routePart)
             {
                 $urlPart    = try_get($url, $index, '');
                 $validRoute &= $urlPart == $routePart || $routePart == '*';
@@ -190,7 +201,7 @@ class App
 
             if($validRoute)
             {
-                $routeChosen = implode('/', $route);
+                $routeUrlChosen = implode('/', $routeUrl);
                 $routeAction = $action;
                 break;
             }
@@ -198,7 +209,7 @@ class App
 
         $url = implode('/', $url);
 
-        if($routeChosen && $routeAction)
+        if($routeUrlChosen && $routeAction)
         {
             if(is_string($routeAction))
             {
@@ -223,11 +234,35 @@ class App
                 $callback = $routeAction;
             }
 
-            return $callback();
+            $request = new RequestHelper();
+
+            if($callback instanceof \Closure)
+            {
+                return $callback();
+            }
+            else
+            {
+                error('$callback is not a \\Closure instance');
+            }
         }
         else
         {
             error("Route '$url' not found");
         }
+
+        return null;
+    }
+
+    public function route($name, $arguments = [])
+    {
+        $url = try_get(config("routes.$name"), 'url');
+
+        if(!empty($url))
+        {
+            $arguments = implode('&', array_map(function($value, $key) {return "$key=$value";}, $arguments));
+            return $url . (!empty($arguments) ? ('?' . $arguments) : '');
+        }
+
+        return null;
     }
 }

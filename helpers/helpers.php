@@ -282,4 +282,74 @@
         }
     }
 
+    if(!function_exists('route'))
+    {
+        /**
+         * Route
+         *
+         * Returns the route from the routes config
+         * with arguments applied to the url
+         *
+         * @param string $name
+         * @param array $arguments
+         * @return mixed|null
+         */
+        function route($name, $arguments = [])
+        {
+            return str_replace('*', '', app()->route($name, $arguments));
+        }
+    }
+
+    if(!function_exists('script'))
+    {
+        /**
+         * Script
+         *
+         * Returns a script element pointing
+         * to the provided url
+         *
+         * @param $url
+         * @param string $extra
+         * @return string
+         */
+        function script($url, $extra = '')
+        {
+            return "<script src='$url' $extra></script>";
+        }
+    }
+
+    if(!function_exists('style'))
+    {
+        /**
+         * Style
+         *
+         * Returns a style element pointing
+         * to the provided url
+         *
+         * @param $url
+         * @param string $extra
+         * @return string
+         */
+        function style($url, $extra = '')
+        {
+            return "<link href='$url' rel='stylesheet' $extra>";
+        }
+    }
+
+    if(!function_exists('buildArray'))
+    {
+        /**
+         * Build Array
+         *
+         * Used to build an array using function calls as the key,
+         * and their parameters as the values
+         *
+         * @return BuildArrayHelper
+         */
+        function buildArray()
+        {
+            return new BuildArrayHelper();
+        }
+    }
+
 ?>

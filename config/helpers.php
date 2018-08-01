@@ -2,6 +2,8 @@
 
 return [
     'include' => [
-        QueryHelper::class
+        QueryHelper::class,
+        RequestHelper::class,
+        BuildArrayHelper::class,
     ]
 ];
