@@ -1,4 +1,7 @@
 <?php
+/**
+ * User: Jeremy
+ */
 
 return [
     'dashboard_index'   => buildArray()->url('/dashboard')->call('DashboardController@index')->get(),

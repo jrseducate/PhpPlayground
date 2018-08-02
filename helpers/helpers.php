@@ -1,4 +1,7 @@
 <?php
+/**
+ * User: Jeremy
+ */
     if(!function_exists('dump'))
     {
         /**
@@ -10,10 +13,19 @@
          */
         function dump(...$values)
         {
+            echo '<pre>';
             foreach($values as $value)
             {
-                echo '<pre>' , var_dump($value) , '</pre>';
+                if(is_string($value))
+                {
+                    echo $value . ' ';
+                }
+                else
+                {
+                    echo var_dump($value) . ' ';
+                }
             }
+            echo '</pre>';
         }
     }
 
@@ -28,12 +40,44 @@
          */
         function dd(...$values)
         {
-            foreach($values as $value)
-            {
-                echo '<pre>' , var_dump($value) , '</pre>';
-            }
+            dump(...$values);
 
             die();
+        }
+    }
+
+    if(!function_exists('array_map_keys'))
+    {
+        /**
+         * Array Map Keys
+         *
+         * Maps the array with keys and values
+         *
+         * @param \Closure $callback
+         * @param array $array
+         * @return array
+         */
+        function array_map_keys($callback, $array)
+        {
+            $newArray = [];
+
+            if($callback instanceof \Closure && is_array($array) || is_object($array))
+            {
+                foreach($array as $key => $value)
+                {
+                    $result = $callback($value, $key);
+
+                    if(!empty($result))
+                    {
+                        foreach($result as $resKey => $resValue)
+                        {
+                            $newArray[$resKey] = $resValue;
+                        }
+                    }
+                }
+            }
+
+            return $newArray;
         }
     }
 

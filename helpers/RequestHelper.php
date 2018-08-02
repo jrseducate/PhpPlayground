@@ -1,9 +1,6 @@
 <?php
 /**
- * Created by PhpStorm.
  * User: Jeremy
- * Date: 7/31/2018
- * Time: 9:44 PM
  */
 
 class RequestHelper

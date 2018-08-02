@@ -1,11 +1,11 @@
 <?php
 /**
- * Created by PhpStorm.
  * User: Jeremy
- * Date: 7/30/2018
- * Time: 8:45 PM
  */
 
+/**
+ * Class App
+ */
 class App
 {
     public function __construct()
@@ -38,8 +38,8 @@ class App
     {
         $file = str_replace('.', DS, $name);
         $html = read_file(VIEW_DIR . DS . $file . '.blade.php');
-        $html = $this->parseView($name, $html, $with);
         $html = $this->parseView($name, $html, $with, false, '<?php', '?>');
+        $html = $this->parseView($name, $html, $with);
 
         return $html;
     }
@@ -74,7 +74,20 @@ class App
                 $code = $expectReturn ? "return ($code);" : $code . ';';
                 try
                 {
+                    eval($this->unpackTemp(__FUNCTION__));
+                    $keysBefore = array_keys(get_defined_vars());
                     $result = eval($code);
+                    $varsAfter = get_defined_vars();
+                    $keysAdded = array_diff(array_keys($varsAfter), $keysBefore, ['keysBefore', 'result']);
+                    //dump($keysAdded);
+                    $this->packTemp(__FUNCTION__, array_map_keys(function($key) use($varsAfter)
+                    {
+                        return [$key => $varsAfter[$key]];
+                    }, $keysAdded));
+//                    dump('$code "', $code, '"');
+//                    dump('$keysBefore', $keysBefore);
+//                    dump('$keysAfter', $varsAfter);
+//                    dump($keysAdded);
                 }
                 catch(\Error $exception)
                 {
@@ -264,5 +277,27 @@ class App
         }
 
         return null;
+    }
+
+    public $temp = [];
+
+    public function unpackTemp($function)
+    {
+        $varNames = implode(', ', array_map_keys(function($value, $key)
+        {
+            return [$key => '$' . $key];
+        }, try_get($this->temp, $function, [])));
+
+        if(!empty($varNames))
+        {
+            return "list($varNames) = " . 'array_values($this->temp["' . $function . '"]);';
+        }
+
+        return '';
+    }
+
+    public function packTemp($function, $vars)
+    {
+        $this->temp[$function] = $vars;
     }
 }
